@@ -100,7 +100,7 @@ void loop() {
 
 <p float="left">
   <img src="img1.jpg" width="45%" />
-  <img src="img2.jpg" width="45%" />
+  <img src="img22.jpg" width="45%" />
 </p>
 
 # via BLUETOOTH 
