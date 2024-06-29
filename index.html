@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C++ Code Comparison</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Font Awesome 5.15.1 CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="code-panel">
+        <h2>via WiFi</h2>
+        <pre>
+                <code>
+#include &lt;WiFi.h&gt;
+
+const char* <span class="keyword">ssid</span> = "<span class="string">spaceTime</span>";
+const char* <span class="keyword">password</span> = "<span class="string">x92fqrjp</span>";
+
+WiFiServer <span class="symbol">server</span>(80);
+
+void <span class="function">setup</span>() {
+    Serial.<span class="function">begin</span>(115200);
+    pinMode(5, OUTPUT);  <span class="comment">// set the LED pin mode</span>
+
+    delay(10);
+
+    <span class="comment">// We start by connecting to a WiFi network</span>
+
+    Serial.println();
+    Serial.println();
+    Serial.print("Connecting to ");
+    Serial.println(<span class="keyword">ssid</span>);
+
+    WiFi.<span class="function">begin</span>(<span class="keyword">ssid</span>, <span class="keyword">password</span>);
+
+    while (WiFi.<span class="function">status</span>() != WL_CONNECTED) {
+        delay(500);
+        Serial.print(".");
+    }
+
+    Serial.println("");
+    Serial.println("WiFi connected.");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.<span class="function">localIP</span>());
+
+    <span class="symbol">server</span>.<span class="function">begin</span>();
+}
+
+void <span class="function">loop</span>() {
+    WiFiClient <span class="symbol">client</span> = <span class="symbol">server</span>.<span class="function">available</span>();  <span class="comment">// listen for incoming clients</span>
+
+    if (<span class="symbol">client</span>) {                     <span class="comment">// if you get a client,</span>
+        Serial.println("New Client.");  <span class="comment">// print a message out the serial port</span>
+        String <span class="symbol">currentLine</span> = "";        <span class="comment">// make a String to hold incoming data from the client</span>
+        while (<span class="symbol">client</span>.<span class="function">connected</span>()) {    <span class="comment">// loop while the client's connected</span>
+            if (<span class="symbol">client</span>.<span class="function">available</span>()) {     <span class="comment">// if there's bytes to read from the client,</span>
+                char <span class="symbol">c</span> = <span class="symbol">client</span>.<span class="function">read</span>();     <span class="comment">// read a byte, then</span>
+                Serial.<span class="function">write</span>(<span class="symbol">c</span>);            <span class="comment">// print it out the serial monitor</span>
+                if (<span class="symbol">c</span> == '\n') {            <span class="comment">// if the byte is a newline character</span>
+
+                    <span class="comment">// if the current line is blank, you got two newline characters in a row.</span>
+                    <span class="comment">// that's the end of the client HTTP request, so send a response:</span>
+                    if (<span class="symbol">currentLine</span>.<span class="function">length</span>() == 0) {
+                        <span class="comment">// HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)</span>
+                        <span class="comment">// and a content-type so the client knows what's coming, then a blank line:</span>
+                        <span class="symbol">client</span>.<span class="function">println</span>("HTTP/1.1 200 OK");
+                        <span class="symbol">client</span>.<span class="function">println</span>("Content-type:text/html");
+                        <span class="symbol">client</span>.<span class="function">println</span>();
+
+                        <span class="comment">// the content of the HTTP response follows the header:</span>
+                        <span class="symbol">client</span>.<span class="function">print</span>("&lt;!DOCTYPE html&gt;&lt;html&gt;");
+                        <span class="symbol">client</span>.<span class="function">print</span>("&lt;head&gt;&lt;meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"&gt;");
+                        <span class="symbol">client</span>.<span class="function">print</span>("&lt;style&gt;body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }");
+                        <span class="symbol">client</span>.<span class="function">print</span>(".button { display: inline-block; padding: 15px 25px; font-size: 24px; cursor: pointer; text-align: center; text-decoration: none; outline: none; color: #fff; background-color: #4CAF50; border: none; border-radius: 15px; box-shadow: 0 9px #999; margin: 10px; }");
+                        <span class="symbol">client</span>.<span class="function">print</span>(".button:hover { background-color: #3e8e41 }");
+                        <span class="symbol">client</span>.<span class="function">print</span>(".button:active { background-color: #3e8e41; box-shadow: 0 5px #666; transform: translateY(4px); }&lt;/style&gt;&lt;/head&gt;");
+                        <span class="symbol">client</span>.<span class="function">print</span>("&lt;body&gt;&lt;h1&gt;ESP32 LED Control&lt;/h1&gt;");
+                        <span class="symbol">client</span>.<span class="function">print</span>("&lt;button class=\"button\" onclick=\"location.href='/H'\"&gt;Turn LED On&lt;/button&gt;");
+                        <span class="symbol">client</span>.<span class="function">print</span>("&lt;button class=\"button\" onclick=\"location.href='/L'\"&gt;Turn LED Off&lt;/button&gt;");
+                        <span class="symbol">client</span>.<span class="function">print</span>("&lt;/body&gt;&lt;/html&gt;");
+
+                        <span class="comment">// The HTTP response ends with another blank line:</span>
+                        <span class="symbol">client</span>.<span class="function">println</span>();
+                        <span class="comment">// break out of the while loop:</span>
+                        break;
+                    } else {  <span class="comment">// if you got a newline, then clear currentLine:</span>
+                        <span class="symbol">currentLine</span> = "";
+                    }
+                } else if (<span class="symbol">c</span> != '\r') {  <span class="comment">// if you got anything else but a carriage return character,</span>
+                    <span class="symbol">currentLine</span> += <span class="symbol">c</span>;      <span class="comment">// add it to the end of the currentLine</span>
+                }
+
+                <span class="comment">// Check to see if the client request was "GET /H" or "GET /L":</span>
+                if (<span class="symbol">currentLine</span>.<span class="function">endsWith</span>("GET /H")) {
+                    digitalWrite(5, HIGH);  <span class="comment">// GET /H turns the LED on</span>
+                }
+                if (<span class="symbol">currentLine</span>.<span class="function">endsWith</span>("GET /L")) {
+                    digitalWrite(5, LOW);  <span class="comment">// GET /L turns the LED off</span>
+                }
+            }
+        }
+        <span class="comment">// close the connection:</span>
+        <span class="symbol">client</span>.<span class="function">stop</span>();
+        Serial.println("Client Disconnected.");
+    }
+}
+                </code>
+            </pre>
+      </div>
+
+      <div class="code-panel">
+        <h2>via BLUETOOTH</h2>
+        <pre>
+                <code>
+#include &lt;Arduino.h&gt;
+#include &lt;BLEDevice.h&gt;
+#include &lt;BLEServer.h&gt;
+#include &lt;BLEUtils.h&gt;
+#include &lt;BLE2902.h&gt;
+
+BLEServer *<span class="symbol">pServer</span>;
+BLEService *<span class="symbol">pService</span>;
+BLECharacteristic *<span class="symbol">pCharacteristic</span>;
+
+int <span class="symbol">ledPin</span> = 5; <span class="comment">// GPIO 5 for LED</span>
+
+bool <span class="symbol">ledState</span> = false;
+
+<span class="comment">// Define the BLECallbacks class</span>
+class <span class="keyword">MyBLECallbacks</span> : public BLECharacteristicCallbacks {
+    void <span class="function">onWrite</span>(BLECharacteristic *<span class="symbol">pCharacteristic</span>) {
+        String <span class="symbol">value</span> = <span class="symbol">pCharacteristic</span>-&gt;<span class="function">getValue</span>().c_str(); <span class="comment">// Convert to Arduino String</span>
+        
+        if (<span class="symbol">value</span>.<span class="function">length</span>() > 0) {
+            if (<span class="symbol">value</span> == "1") {
+                digitalWrite(<span class="symbol">ledPin</span>, HIGH);
+                <span class="symbol">ledState</span> = true;
+            } else if (<span class="symbol">value</span> == "0") {
+                digitalWrite(<span class="symbol">ledPin</span>, LOW);
+                <span class="symbol">ledState</span> = false;
+            }
+        }
+    }
+};
+
+void <span class="function">setup</span>() {
+    Serial.<span class="function">begin</span>(115200);
+    pinMode(<span class="symbol">ledPin</span>, OUTPUT);
+    digitalWrite(<span class="symbol">ledPin</span>, LOW);
+
+    BLEDevice::init("LED Control"); <span class="comment">// Name of your BLE device</span>
+    <span class="symbol">pServer</span> = BLEDevice::createServer();
+    <span class="symbol">pService</span> = <span class="symbol">pServer</span>-&gt;createService(BLEUUID("4fafc201-1fb5-459e-8fcc-c5c9c331914b")); <span class="comment">// Custom service UUID</span>
+
+    <span class="symbol">pCharacteristic</span> = <span class="symbol">pService</span>-&gt;createCharacteristic(
+        BLEUUID("beb5483e-36e1-4688-b7f5-ea07361b26a8"), <span class="comment">// Custom characteristic UUID</span>
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE
+    );
+
+    <span class="symbol">pCharacteristic</span>-&gt;setCallbacks(new <span class="keyword">MyBLECallbacks</span>());
+    <span class="symbol">pCharacteristic</span>-&gt;addDescriptor(new BLE2902());
+
+    <span class="symbol">pService</span>-&gt;start();
+
+    BLEAdvertising *<span class="symbol">pAdvertising</span> = <span class="symbol">pServer</span>-&gt;getAdvertising();
+    <span class="symbol">pAdvertising</span>-&gt;start();
+}
+
+void <span class="function">loop</span>() {
+    <span class="comment">// Handle BLE events</span>
+    delay(10);
+}
+                </code>
+            </pre>
+      </div>
+    </div>
+
+    <div class="social-links">
+      <a href="https://akashdip2001.github.io/linktree/"><h2>Follow Us:</h2></a>
+      <div class="wrapper">
+        <a
+          href="https://www.facebook.com/drawing.hobby.37/"
+          class="icon facebook"
+        >
+          <div class="tooltip"></div>
+          <span><i class="fab fa-facebook-f"></i></span>
+        </a>
+        <a href="https://twitter.com/akashdipaot2001" class="icon twitter">
+          <div class="tooltip"></div>
+          <span><i class="fab fa-twitter"></i></span>
+        </a>
+        <a
+          href="https://www.instagram.com/akashdip_mahapatra/"
+          class="icon instagram"
+        >
+          <div class="tooltip"></div>
+          <span><i class="fab fa-instagram"></i></span>
+        </a>
+        <a href="https://github.com/akashdip2001" class="icon github">
+          <div class="tooltip"></div>
+          <span><i class="fab fa-github"></i></span>
+        </a>
+        <a
+          href="https://www.youtube.com/channel/UCxvmp634YDc41xCWOdvWqoQ"
+          class="icon youtube"
+        >
+          <div class="tooltip"></div>
+          <span><i class="fab fa-youtube"></i></span>
+        </a>
+      </div>
+    </div>
+
+    <div class="video-container">
+      <h2>Watch on YouTube:</h2>
+      <iframe
+        width="315"
+        height="560"
+        src="https://www.youtube.com/embed/dstuXdZnhTg?controls=1"
+        frameborder="0"
+        allowfullscreen
+      ></iframe>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
